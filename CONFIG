@@ -12,3 +12,6 @@ container_name=centreon
 
 # SMTP server used as relay for system mails (default: docker host)
 smtp_server=172.17.0.1
+
+# VMWare PERL SDK (put in buildenv/files/other/vmware/ folder)
+vmware_perl_sdk="VMware-vSphere-Perl-SDK-6.5.0-4566394.x86_64.tar.gz"
