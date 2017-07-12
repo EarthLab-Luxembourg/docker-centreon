@@ -198,11 +198,24 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     libwww-perl libnet-http-perl libsocket6-perl 
 COPY files/other/vmware/$VMWARE_PERL_SDK /tmp/
 COPY files/other/vmware/auto_install_vmware_sdk.sh /tmp/
+COPY files/other/vmware/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch /tmp/
 # Install it
 WORKDIR /tmp
+RUN tar xvzf "$VMWARE_PERL_SDK"
+# Workaround old SDK not working properly on recent PERL.... (dead slow)
+RUN if `echo "$VMWARE_PERL_SDK" | grep -qE '(SDK-6.0|SDK-5.5)'`; then \
+      apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install make wget \
+        && wget https://github.com/libwww-perl/libwww-perl/archive/libwww-perl/5.837.tar.gz \
+        && tar xzf 5.837.tar.gz \
+        && cd libwww-perl-libwww-perl-5.837/ \
+        && perl Makefile.PL INSTALL_BASE=/opt/libwww-perl-5.837 \
+        && make \
+        && make install \
+        && sed -i '1 i\use lib "/opt/libwww-perl-5.837/lib/perl5";' /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm \
+        && patch /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm < /tmp/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch; \
+    fi
 # Sleep to avoid text file busy bug when running ./auto_install_vmware_sdk.sh
-RUN tar xvzf "$VMWARE_PERL_SDK" \
-    && echo ubuntu > /etc/tmp-release \
+RUN echo ubuntu > /etc/tmp-release \
     && chmod 0755 auto_install_vmware_sdk.sh \
     && sleep 1 \
     && ./auto_install_vmware_sdk.sh
