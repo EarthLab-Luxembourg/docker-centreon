@@ -5,7 +5,7 @@ source CONFIG
 docker run -d \
  --restart=always \
  -p ${host_port}:80 \
- -v "${host_volumes_path}/etc/centreon:/etc/centreon" \
+ -v "${host_volumes_path}/volumes/etc/centreon:/etc/centreon" \
  -v "${host_volumes_path}/volumes/etc/centreon-engine:/etc/centreon-engine" \
  -v "${host_volumes_path}/volumes/etc/centreon-broker:/etc/centreon-broker" \
  -v "${host_volumes_path}/volumes/var/lib/centreon-broker:/var/lib/centreon-broker" \
