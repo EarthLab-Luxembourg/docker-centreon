@@ -1,0 +1,266 @@
+# Need PHP 5.4.x, incompatible with newer versions
+FROM debian:jessie
+
+MAINTAINER Adam Cecile <acecile@le-vert.net>
+
+ENV TERM xterm
+ENV HOSTNAME @@HOSTNAME@@
+ENV SMTP_SERVER @@SMTP_SERVER@@
+ENV SMTP_MAIL_ALIAS root@@@HOSTNAME@@
+
+ENV CENTREON_VERSION 2.8.9
+ENV CENTREON_WIDGET_GRAPH_MONITORING_VERSION 1.5.0
+ENV CENTREON_WIDGET_SERVICE_MONITORING_VERSION 1.5.1
+ENV CENTREON_WIDGET_HOST_MONITORING_VERSION 1.5.1
+ENV CENTREON_WIDGET_SERVICEGROUP_MONITORING_VERSION 1.5.0
+ENV CENTREON_WIDGET_HOSTGROUP_MONITORING_VERSION 1.5.0
+ENV CENTREON_WIDGET_LIVE_TOP10_CPU_USAGE_VERSION 1.1.1
+ENV CENTREON_WIDGET_LIVE_TOP10_MEMORY_USAGE_VERSION 1.1.1
+ENV CENTREON_WIDGET_ENGINE_STATUS_VERSION 1.0.1
+ENV CENTREON_WIDGET_GRID_MAP_VERSION 1.1.0
+ENV CENTREON_WIDGET_HTTPLOADER_VERSION 1.1.0
+ENV CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION 1.0.1
+
+ENV VMWARE_PERL_SDK VMware-vSphere-Perl-SDK-6.5.0-4566394.x86_64.tar.gz 
+
+
+### Update Debian system
+RUN echo "deb http://ftp.fr.debian.org/debian/ jessie main contrib non-free" > /etc/apt/sources.list \
+    && echo "deb http://ftp.fr.debian.org/debian/ jessie-updates main contrib non-free" >> /etc/apt/sources.list \
+    && echo "deb http://ftp.fr.debian.org/debian/ jessie-backports main contrib non-free" >> /etc/apt/sources.list \
+    && echo "deb http://security.debian.org/ jessie/updates main contrib non-free" >> /etc/apt/sources.list
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade
+
+
+### Install base system
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    supervisor \
+    nullmailer bsd-mailx \
+    cron \
+    rsyslog \
+    rrdtool \
+    less \
+    sudo \
+    rsync \
+    nagios-plugins nagios-plugins-contrib nagios-nrpe-plugin \
+    apache2 libapache2-mod-php5 \
+    snmp snmp-mibs-downloader \
+    vim nano
+# Fix check_icmp not being setuid root
+RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_icmp
+# Configure nullmailer
+RUN mkfifo /var/spool/nullmailer/trigger \
+    && chown mail:root /var/spool/nullmailer/trigger \
+    && chmod 0622 /var/spool/nullmailer/trigger \
+    && echo "${HOSTNAME}" > /etc/mailname \
+    && echo "${SMTP_SERVER}" > /etc/nullmailer/remotes \
+    && echo "${SMTP_MAIL_ALIAS}" > /etc/nullmailer/adminaddr
+# Set Apache to UTC timezone
+RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/php5/apache2/php.ini
+
+
+#### Install centreon engine and related
+RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ jessie main' >> /etc/apt/sources.list
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    centreon-broker centreon-engine centreon-connector centreon-plugins
+# mklive-status for nagvis or thruk installation
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    -t jessie-backports \
+    check-mk-livestatus
+# Rename files that will be exported as external volumes and dpkg-divert initscript, replaced by a script calling supervisorctl
+RUN  mv /etc/centreon-broker /etc/centreon-broker.initial \
+     && mv /etc/centreon-engine /etc/centreon-engine.initial \
+     && mv /var/lib/centreon-engine /var/lib/centreon-engine.initial \
+     && mv /var/log/centreon-engine /var/log/centreon-engine.initial \
+     && mv /var/lib/centreon-broker /var/lib/centreon-broker.initial \
+     && mv /var/log/centreon-broker /var/log/centreon-broker.initial \
+     && dpkg-divert --add --rename /etc/init.d/centengine \
+     && dpkg-divert --add --rename /etc/init.d/centcore \
+     && dpkg-divert --add --rename /etc/init.d/cbd
+COPY files/etc/init.d/centengine /etc/init.d/
+COPY files/etc/init.d/centcore /etc/init.d/
+COPY files/etc/init.d/cbd /etc/init.d/
+RUN chmod 0755 /etc/init.d/centengine /etc/init.d/centcore /etc/init.d/cbd
+
+
+### Cassandra monitoring require cassandra binaries and JRE
+RUN echo 'deb [trusted=yes] http://www.apache.org/dist/cassandra/debian 34x main' >> /etc/apt/sources.list
+ADD https://www.apache.org/dist/cassandra/KEYS /tmp/
+RUN apt-key add /tmp/KEYS
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    -t jessie-backports \
+    cassandra openjdk-8-jre-headless
+
+
+### Install centreon Web
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    php5 php5-mysql php5-ldap php5-gd php5-sqlite php5-intl \
+    php-pear php-auth-sasl php-db php-mdb2 php-date php-net-smtp php-net-socket php-validate php-xml-rpc php-soap php-log \
+    librrds-perl libdbi-perl libdbd-mysql-perl libnet-snmp-perl libconfig-inifiles-perl
+WORKDIR /tmp
+# DO NOT USE GITHUB URL HERE
+# IT LOOKS BEING THE SAME BUT IT'S NOT
+# MISS ALL check_* scripts
+ADD	https://s3-eu-west-1.amazonaws.com/centreon-download/public/centreon/centreon-web-$CENTREON_VERSION.tar.gz /tmp/
+RUN     mkdir centreon-web-$CENTREON_VERSION && tar xzf centreon-web-$CENTREON_VERSION.tar.gz -C centreon-web-$CENTREON_VERSION --strip-components=1 \
+          && sed -i 's!/usr/lib64/centreon-connector!/usr/lib/centreon-connector!g' /tmp/centreon-web-$CENTREON_VERSION/libinstall/CentWeb.sh  \
+          && sed -i 's!/usr/lib64/centreon-connector!/usr/lib/centreon-connector!g' /tmp/centreon-web-$CENTREON_VERSION/www/install/var/engines/centreon-engine \
+          && sed -i 's!/usr/lib64/centreon-engine!/usr/lib/centreon-engine!g' /tmp/centreon-web-$CENTREON_VERSION/www/install/var/engines/centreon-engine \
+          && sed -i 's!/usr/lib64/nagios/cbmod.so!/usr/lib/centreon-broker/cbmod.so!g' /tmp/centreon-web-$CENTREON_VERSION/www/install/var/brokers/centreon-broker \
+          && sed -i 's!/usr/share/centreon/lib/centreon-broker!/usr/lib/centreon-broker/modules!g' /tmp/centreon-web-$CENTREON_VERSION/www/install/var/brokers/centreon-broker \
+          && sed -i 's!/usr/share/centreon-engine!/usr!g' /tmp/centreon-web-$CENTREON_VERSION/www/install/var/engines/centreon-engine
+WORKDIR /tmp/centreon-web-$CENTREON_VERSION
+RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
+          && echo CENTREON_ENGINE_CONNECTORS=/usr/lib/centreon-connector >> tmpl/vardistrib/local \
+          && echo CENTREON_PLUGINS=/usr/lib/nagios/plugins >> tmpl/vardistrib/local \
+          && echo INSTALL_DIR_CENTREON=/srv/centreon >> tmpl/vardistrib/local \
+          && groupadd centreon && useradd -g centreon centreon \
+          && mv /bin/hostname /bin/hostname.orig && /bin/echo -e "/bin/sh\n\necho ${HOSTNAME}" > /bin/hostname && chmod 755 /bin/hostname \
+          && ./install.sh -f tmpl/vardistrib/local \
+          && mv /bin/hostname.orig /bin/hostname \
+          && a2enconf centreon
+RUN     mkdir -p `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
+          && cp -a /tmp/centreon-web-$CENTREON_VERSION/lib/perl/centreon `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
+          && mv /etc/centreon /etc/centreon.initial \
+          && mv /var/lib/centreon /var/lib/centreon.initial
+
+
+
+### Setup supervisor to start all processes
+COPY files/root/start.sh /root/
+COPY files/etc/supervisor/conf.d/apache2.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/cron.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/rsyslogd.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/nullmailer.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/centengine.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/cbd.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/centcore.conf /etc/supervisor/conf.d/
+
+
+### DELL EqualLogic monitoring
+COPY files/git-repositories/check_equallogic/check_equallogic.sh /usr/lib/nagios/plugins/
+RUN chmod 755 /usr/lib/nagios/plugins/check_equallogic.sh
+
+
+### IPMI monitoring
+COPY files/git-repositories/check_ipmi_simple/check_ipmi_simple_chassis.py /usr/lib/nagios/plugins/
+COPY files/git-repositories/check_ipmi_simple/check_ipmi_simple_sensors.py /usr/lib/nagios/plugins/
+RUN chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_chassis.py
+RUN chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_sensors.py
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    freeipmi-tools
+
+### RabbitMQ monitoring
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_aliveness /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_exchange /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_partition /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_shovels /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_cluster /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_objects /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_queue /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_watermark /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_connections /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_overview /usr/lib/nagios/plugins/
+COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_server /usr/lib/nagios/plugins/
+RUN chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_aliveness \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_exchange \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_partition \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_shovels \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_cluster \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_objects \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_queue \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_watermark \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_connections \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_overview \
+     && chmod 755 /usr/lib/nagios/plugins/check_rabbitmq_server
+
+
+### DNS monitoring
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    dnsutils
+
+### Add VMware/ESX monitoring
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    libssl-dev \
+    perl-doc \
+    libxml-libxml-perl \
+    libxml2-dev \
+    uuid-dev \
+    kmod \
+    expect \
+    libdevel-stacktrace-perl libclass-data-inheritable-perl libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-x509-perl libexception-class-perl libpath-class-perl libtry-tiny-perl libnet-inet6glue-perl libuuid-random-perl \
+    libcrypt-ssleay-perl \
+    libarchive-zip-perl libclass-methodmaker-perl libdata-dump-perl libsoap-lite-perl libuuid-perl \
+    libwww-perl libnet-http-perl libsocket6-perl 
+COPY files/other/vmware/$VMWARE_PERL_SDK /tmp/
+COPY files/other/vmware/auto_install_vmware_sdk.sh /tmp/
+# Install it
+WORKDIR /tmp
+RUN env && ls -lah $VMWARE_PERL_SDK \
+    && tar xvzf "$VMWARE_PERL_SDK" \
+    && echo ubuntu > /etc/tmp-release \
+    && chmod 0755 auto_install_vmware_sdk.sh \
+    && ./auto_install_vmware_sdk.sh
+# check_vmware_esx script
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    libtime-duration-perl
+COPY files/git-repositories/check_vmware_esx/check_vmware_esx.pl /usr/lib/nagios/plugins/
+COPY files/git-repositories/check_vmware_esx/modules /usr/lib/nagios/vmware/modules/
+# In order to get the script working, need to change the path
+RUN  sed -i 's!^#\(use lib "/usr/lib/nagios/vmware/modules";\)!\1!' /usr/lib/nagios/plugins/check_vmware_esx.pl
+# End VMware/ESX monitoring
+
+# Start BigData monitoring
+# TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME
+# Provide nagios-plugin-bigdata in my repo
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    nagios-plugins-bigdata \
+    libnagios-plugin-perl \
+    libclass-accessor-perl \
+    libconfig-tiny-perl \
+    libmath-calc-units-perl \
+    libsub-name-perl
+# Strip % from nodetool output
+RUN sed -i 's!\(\s*\)\(my \$percentage = \$2;\)\s*$!\1\2\n\1$percentage =~ tr/%//d;!' /usr/lib/nagios-plugins-bigdata/check_cassandra_balance.pl
+RUN sed -i 's!/<tr><th>Total: <\\/th><td>servers: (\\d+)<\\/td>/!/<tr><td>Total:(\\d+)<\\/td>/!' /usr/lib/nagios/plugins/check_hbase_regionservers_jsp.pl
+# Might return metric in scientific notation is very low
+RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_metrics.pl
+RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_master_metrics.pl
+RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_slave_metrics.pl
+# End BigData monitoring
+
+# Centreon Widgets
+# No working download link for graph-monitoring
+ADD https://github.com/centreon/centreon-widget-graph-monitoring/archive/$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz /tmp/centreon-widget-graph-monitoring-$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-service-monitoring/archive/$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz /tmp/centreon-widget-service-monitoring-$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-host-monitoring/archive/$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz /tmp/centreon-widget-host-monitoring-$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-servicegroup-monitoring/archive/$CENTREON_WIDGET_SERVICEGROUP_MONITORING_VERSION.tar.gz /tmp/centreon-widget-servicegroup-monitoring-$CENTREON_WIDGET_SERVICEGROUP_MONITORING_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-hostgroup-monitoring/archive/$CENTREON_WIDGET_HOSTGROUP_MONITORING_VERSION.tar.gz /tmp/centreon-widget-hostgroup-monitoring-$CENTREON_WIDGET_HOSTGROUP_MONITORING_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-live-top10-cpu-usage/archive/$CENTREON_WIDGET_LIVE_TOP10_CPU_USAGE_VERSION.tar.gz /tmp/centreon-widget-live-top10-cpu-usage-$CENTREON_WIDGET_LIVE_TOP10_CPU_USAGE_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-live-top10-memory-usage/archive/$CENTREON_WIDGET_LIVE_TOP10_MEMORY_USAGE_VERSION.tar.gz /tmp/centreon-widget-live-top10-memory-usage-$CENTREON_WIDGET_LIVE_TOP10_MEMORY_USAGE_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-engine-status/archive/$CENTREON_WIDGET_ENGINE_STATUS_VERSION.tar.gz /tmp/centreon-widget-engine-status-$CENTREON_WIDGET_ENGINE_STATUS_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-grid-map/archive/$CENTREON_WIDGET_GRID_MAP_VERSION.tar.gz /tmp/centreon-widget-grid-map-$CENTREON_WIDGET_GRID_MAP_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-httploader/archive/$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz
+ADD https://github.com/centreon/centreon-widget-tactical-overview/archive/$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-graph-monitoring-$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-graph-monitoring-$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-service-monitoring-$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-service-monitoring-$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-host-monitoring-$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-host-monitoring-$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-servicegroup-monitoring-$CENTREON_WIDGET_SERVICEGROUP_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-servicegroup-monitoring-$CENTREON_WIDGET_SERVICEGROUP_MONITORING_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-hostgroup-monitoring-$CENTREON_WIDGET_HOSTGROUP_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-hostgroup-monitoring-$CENTREON_WIDGET_HOSTGROUP_MONITORING_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-live-top10-cpu-usage-$CENTREON_WIDGET_LIVE_TOP10_CPU_USAGE_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-live-top10-cpu-usage-$CENTREON_WIDGET_LIVE_TOP10_CPU_USAGE_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-live-top10-memory-usage-$CENTREON_WIDGET_LIVE_TOP10_MEMORY_USAGE_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-live-top10-memory-usage-$CENTREON_WIDGET_LIVE_TOP10_MEMORY_USAGE_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-engine-status-$CENTREON_WIDGET_ENGINE_STATUS_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-engine-status-$CENTREON_WIDGET_ENGINE_STATUS_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-grid-map-$CENTREON_WIDGET_GRID_MAP_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-grid-map-$CENTREON_WIDGET_GRID_MAP_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz
+RUN tar xvf /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz
+
+EXPOSE 80
+
+RUN rm -rf /tmp/*
+WORKDIR /root
+
+CMD ["/bin/bash", "/root/start.sh"]

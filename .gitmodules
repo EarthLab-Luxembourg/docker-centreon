@@ -1,0 +1,12 @@
+[submodule "buildenv/files/git-repositories/check_equallogic"]
+	path = buildenv/files/git-repositories/check_equallogic
+	url = https://github.com/Napsty/check_equallogic.git
+[submodule "buildenv/files/git-repositories/check_ipmi_simple"]
+	path = buildenv/files/git-repositories/check_ipmi_simple
+	url = https://github.com/eLvErDe/check_ipmi_simple.git
+[submodule "buildenv/files/git-repositories/check_vmware_esx"]
+	path = buildenv/files/git-repositories/check_vmware_esx
+	url = https://github.com/BaldMansMojo/check_vmware_esx.git
+[submodule "buildenv/files/git-repositories/nagios-plugins-rabbitmq"]
+	path = buildenv/files/git-repositories/nagios-plugins-rabbitmq
+	url = https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq.git

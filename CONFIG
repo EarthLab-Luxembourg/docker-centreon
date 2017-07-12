@@ -1,0 +1,14 @@
+# Hostname to be set inside container (default: use host FQDN as container hostname)
+hostname=`hostname -f`
+
+# Port to use on host to reach container's Apache
+host_port=8080
+
+# Base folder container volumes of the container
+host_volumes_path=/srv/docker/centreon
+
+# Docker image/container name
+container_name=centreon
+
+# SMTP server used as relay for system mails (default: docker host)
+smtp_server=172.17.0.1
