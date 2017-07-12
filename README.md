@@ -26,6 +26,19 @@ FLUSH PRIVILEGES;
 # After installation wizard
 
 For some unknown reason Centreon gets stuck into an infinite wizard loop. Just restart the container.
+Centreon is now available on http://docker.host:8080/centreon/.
+
+# mklive-status TCP socket
+
+mklive-status socket will be exported over TCP so you can easily use Nagvis or Truk on the host itself, or another machine/container.
+Everything is ready and mklive will be exported on TCP/6557 on the host.
+
+However, you need to configure Centreon Engine to output using mklive.
+For this, log into the Web interface en go to: Configuration > Pollers > Engine configuration (left) and click on "Centreon Engine CFG 1".
+Then, go to the "Data" tab and add a new "Broker module" with the following content: `/usr/lib/check_mk/livestatus.o /var/lib/centreon-engine/rw/live`
+To apply this new configuration, generate it and tick **restart**. Reloading is not sufficient when adding a module.
+
+On the host, test it using `echo -e "GET hosts\n" | netcat 127.0.0.1 6557`
 
 # TODO
 

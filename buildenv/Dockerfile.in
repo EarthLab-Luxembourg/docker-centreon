@@ -46,6 +46,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     apache2 libapache2-mod-php5 \
     snmp snmp-mibs-downloader \
     libmonitoring-plugin-perl \
+    xinetd \
     vim nano
 # Fix check_icmp not being setuid root
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_icmp
@@ -138,6 +139,8 @@ COPY files/etc/supervisor/conf.d/nullmailer.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/centengine.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/cbd.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/centcore.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/xinetd.conf /etc/supervisor/conf.d/
+COPY files/etc/xinetd.d/mklive /etc/xinetd.d/
 
 
 ### DELL EqualLogic monitoring
@@ -231,6 +234,7 @@ RUN  sed -i 's!^#\(use lib "/usr/lib/nagios/vmware/modules";\)!\1!' /usr/lib/nag
 # Start BigData monitoring
 # TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME
 # Provide nagios-plugin-bigdata in my repo
+RUN echo 'deb [trusted=yes] http://packages.hitec.lu/hitec/common/debian/ jessie main' >> /etc/apt/sources.list
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     nagios-plugins-bigdata \
@@ -273,7 +277,7 @@ RUN tar xvf /tmp/centreon-widget-grid-map-$CENTREON_WIDGET_GRID_MAP_VERSION.tar.
 RUN tar xvf /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz
 RUN tar xvf /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz
 
-EXPOSE 80
+EXPOSE 80 6557
 
 RUN rm -rf /tmp/*
 WORKDIR /root

@@ -1,0 +1,17 @@
+# default: on
+# description: mklive over TCP for Centreon Engine
+# This allow remote usage of Nagvis or Thruk for example
+# http://mathias-kettner.de/checkmk_livestatus.html#H1:Remote%20access%20to%20Livestatus%20via%20SSH%20or%20xinetd
+service mklive
+{
+	disable		= no
+	type		= UNLISTED
+	port		= 6557
+	socket_type	= stream
+	protocol	= tcp
+	wait		= no
+	flags		= NODELAY
+	user		= centreon-engine
+	server		= /usr/bin/unixcat
+	server_args	= /var/lib/centreon-engine/rw/live 
+}
