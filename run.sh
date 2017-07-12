@@ -14,5 +14,6 @@ docker run -d \
  -v "${host_volumes_path}/volumes/var/log/centreon-engine:/var/log/centreon-engine" \
  -v "${host_volumes_path}/volumes/var/lib/centreon:/var/lib/centreon" \
  --hostname "${hostname}" \
- --name "${container_nane}" \
+ --name "${container_name}" \
+ --restart always \
  "${container_name}"
