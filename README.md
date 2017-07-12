@@ -1,7 +1,7 @@
 # Before building your own image
 
 Edit `CONFIG` file and set your local settings before doing anything.
-Also download VMware-vSphere-Perl-SDK-6.5.0-4566394.x86_64.tar.gz from VMWare (for ESX monitoring) into buildenv/files/other/vmware/ folder.  
+Also download VMware-vSphere-Perl-SDK-6.5.0-4566394.x86\_64.tar.gz from VMWare (for ESX monitoring) into buildenv/files/other/vmware/ folder.
 
 # MySQL/MariaDB on the host
 
