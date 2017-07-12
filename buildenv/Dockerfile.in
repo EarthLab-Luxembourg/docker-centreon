@@ -45,6 +45,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     nagios-plugins nagios-plugins-contrib nagios-nrpe-plugin \
     apache2 libapache2-mod-php5 \
     snmp snmp-mibs-downloader \
+    libmonitoring-plugin-perl \
     vim nano
 # Fix check_icmp not being setuid root
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_icmp
