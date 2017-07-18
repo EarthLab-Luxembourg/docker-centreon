@@ -10,3 +10,6 @@
 [submodule "buildenv/files/git-repositories/nagios-plugins-rabbitmq"]
 	path = buildenv/files/git-repositories/nagios-plugins-rabbitmq
 	url = https://github.com/nagios-plugins-rabbitmq/nagios-plugins-rabbitmq.git
+[submodule "buildenv/files/git-repositories/check_docker_container"]
+	path = buildenv/files/git-repositories/check_docker_container
+	url = https://github.com/eLvErDe/check_docker_container.git
