@@ -51,6 +51,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
 # Fix check_icmp not being setuid root
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_icmp
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_dhcp
+# Enable default MIBs
+RUN sed -i 's!^\(mibs\s:\)$!#\1!' /etc/snmp/snmp.conf
 # Configure nullmailer
 RUN mkfifo /var/spool/nullmailer/trigger \
     && chown mail:root /var/spool/nullmailer/trigger \
