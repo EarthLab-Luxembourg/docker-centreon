@@ -231,7 +231,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
 COPY files/git-repositories/check_vmware_esx/check_vmware_esx.pl /usr/lib/nagios/plugins/
 COPY files/git-repositories/check_vmware_esx/modules /usr/lib/nagios/vmware/modules/
 # In order to get the script working, need to change the path
-RUN  sed -i 's!^#\(use lib "/usr/lib/nagios/vmware/modules";\)!\1!' /usr/lib/nagios/plugins/check_vmware_esx.pl
+RUN sed -i 's!^#\(use lib "/usr/lib/nagios/vmware/modules";\)!\1!' /usr/lib/nagios/plugins/check_vmware_esx.pl
+# Otherwise the script crash when ran from /root
+RUN chmod 0755 /root
 # End VMware/ESX monitoring
 
 # Start BigData monitoring
