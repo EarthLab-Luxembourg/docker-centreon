@@ -36,6 +36,8 @@ chown -R centreon-engine:centreon-engine /etc/centreon-engine/ /var/log/centreon
 chown -R centreon:centreon-broker /var/lib/centreon/metrics/ /var/lib/centreon/status/
 find /var/lib/centreon/metrics/ -type f -exec chmod 0664 {} \;
 find /var/lib/centreon/status/ -type f -exec chmod 0664 {} \;
+find /var/log/centreon-broker/ -type f -exec chmod 0664 {} \;
+find /var/log/centreon-engine/ -type f -exec chmod 0664 {} \;
 
 # Init like system to start services
 supervisord -n -c /etc/supervisor/supervisord.conf -e debug
