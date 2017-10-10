@@ -1,2 +1,4 @@
 buildenv/Dockerfile
 buildenv/files/other/vmware/*.tar.gz
+buildenv/Dockerfile.local
+buildenv/files.local
