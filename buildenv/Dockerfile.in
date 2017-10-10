@@ -284,7 +284,10 @@ RUN tar xvf /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVE
 
 EXPOSE 80 6557
 
+@@DOCKERFILELOCAL@@
+
 RUN rm -rf /tmp/*
 WORKDIR /root
+
 
 CMD ["/bin/bash", "/root/start.sh"]
