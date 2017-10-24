@@ -1,9 +1,8 @@
 # Hostname to be set inside container (default: use host FQDN as container hostname)
 hostname=`hostname -f`
-hostname=centreon.service.earthlab.lu
 
 # Port to use on host to reach container's Apache
-host_port=8880
+host_port=8080
 
 # Base folder container volumes of the container
 host_volumes_path=/srv/docker/centreon
@@ -13,8 +12,7 @@ container_name=centreon
 
 # SMTP server used as relay for system mails (default: docker host)
 smtp_server=172.17.0.1
-smtp_server=mail.service.earthlab.lu
 
 # VMWare PERL SDK (put in buildenv/files/other/vmware/ folder)
+#vmware_perl_sdk="VMware-vSphere-Perl-SDK-6.0.0-3561779.x86_64.tar.gz"
 vmware_perl_sdk="VMware-vSphere-Perl-SDK-6.5.0-4566394.x86_64.tar.gz"
-vmware_perl_sdk="VMware-vSphere-Perl-SDK-6.0.0-3561779.x86_64.tar.gz"
