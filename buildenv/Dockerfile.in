@@ -237,24 +237,9 @@ RUN chmod 0755 /root
 # End VMware/ESX monitoring
 
 # Start BigData monitoring
-# TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME TODO FIXME
-# Provide nagios-plugin-bigdata in my repo
-RUN echo 'deb [trusted=yes] http://packages.hitec.lu/hitec/common/debian/ jessie main' >> /etc/apt/sources.list
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    nagios-plugins-bigdata \
-    libnagios-plugin-perl \
-    libclass-accessor-perl \
-    libconfig-tiny-perl \
-    libmath-calc-units-perl \
-    libsub-name-perl
-# Strip % from nodetool output
-RUN sed -i 's!\(\s*\)\(my \$percentage = \$2;\)\s*$!\1\2\n\1$percentage =~ tr/%//d;!' /usr/lib/nagios-plugins-bigdata/check_cassandra_balance.pl
-RUN sed -i 's!/<tr><th>Total: <\\/th><td>servers: (\\d+)<\\/td>/!/<tr><td>Total:(\\d+)<\\/td>/!' /usr/lib/nagios/plugins/check_hbase_regionservers_jsp.pl
-# Might return metric in scientific notation is very low
-RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_metrics.pl
-RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_master_metrics.pl
-RUN sed -i 's!\(isFloat(\$metrics{\$key}) or \)!isScientific($metrics{$key}) or \1!' /usr/lib/nagios-plugins-bigdata/check_mesos_slave_metrics.pl
+    nagios-plugins-harisekhon
 # End BigData monitoring
 
 # Centreon Widgets
