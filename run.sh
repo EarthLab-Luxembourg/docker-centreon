@@ -17,4 +17,4 @@ docker run -d \
  --hostname "${hostname}" \
  --name "${container_name}" \
  --restart always \
- "${container_name}"
+ "${container_name}" ${@}

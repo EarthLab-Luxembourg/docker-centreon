@@ -10,7 +10,7 @@ fi
 # Workaround centreon stuck into infinite install wizard loop
 # /!\ After firstrun wizard, RESTART docker so that code gets
 # executed
-if [ -f "/etc/centreon/conf.pm" ]; then
+if [ -f "/etc/centreon/conf.pm" -a "${1}" != "upgrade" ]; then
   rm -rf /srv/centreon/www/install/
 fi
 

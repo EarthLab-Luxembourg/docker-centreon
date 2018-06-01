@@ -290,4 +290,4 @@ RUN rm -rf /tmp/*
 WORKDIR /root
 
 
-CMD ["/bin/bash", "/root/start.sh"]
+ENTRYPOINT ["/bin/bash", "/root/start.sh"]
