@@ -13,3 +13,7 @@
 [submodule "buildenv/files/git-repositories/check_docker_container"]
 	path = buildenv/files/git-repositories/check_docker_container
 	url = https://github.com/eLvErDe/check_docker_container.git
+[submodule "buildenv/files/git-repositories/check_json"]
+	path = buildenv/files/git-repositories/check_json
+	url = https://github.com/senorsmile/check_json.git
+	branch = output_and_warning_critical_fixes
