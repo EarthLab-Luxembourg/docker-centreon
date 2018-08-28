@@ -68,7 +68,7 @@ RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/p
 RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ jessie main' >> /etc/apt/sources.list
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    centreon-broker centreon-engine centreon-connector centreon-plugins
+    centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl
 # mklive-status for nagvis or thruk installation
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     -t jessie-backports \
