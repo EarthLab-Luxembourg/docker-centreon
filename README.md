@@ -17,7 +17,20 @@ cd /tmp/docker-centreon
 ./build.sh
 ```
 
+# Running the image
+```bash
+cd /tmp/docker-centreon
+./run.sh
+```
+
 # MySQL/MariaDB on the host
+An external MariaDB container may be needed.
+```bash
+sudo docker run -itd \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    --name centreon-db \
+    mariadb
+```
 
 There's no point trying to fight with Centreon Web installer.
 The only way to get thru is to temporary create a network-enabled superadmin user and let him do what he wants:
