@@ -1,7 +1,21 @@
+# Get started with docker-centreon
+```bash
+cd /tmp
+git clone https://github.com/EarthLab-Luxembourg/docker-centreon.git
+cd docker-centreon
+git submodule update --init --recursive
+```
+
 # Before building your own image
 
 Edit `CONFIG` file and set your local settings before doing anything.
 Also download VMware-vSphere-Perl-SDK-6.5.0-4566394.x86\_64.tar.gz from VMWare (for ESX monitoring) into buildenv/files/other/vmware/ folder.
+
+# Building the image
+```bash
+cd /tmp/docker-centreon
+./build.sh
+```
 
 # MySQL/MariaDB on the host
 
