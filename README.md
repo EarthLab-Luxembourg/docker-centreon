@@ -1,9 +1,39 @@
+# Get started with docker-centreon
+```bash
+cd /tmp
+git clone --recursive https://github.com/EarthLab-Luxembourg/docker-centreon.git
+cd docker-centreon
+```
+
 # Before building your own image
 
 Edit `CONFIG` file and set your local settings before doing anything.
-Also download VMware-vSphere-Perl-SDK-6.5.0-4566394.x86\_64.tar.gz from VMWare (for ESX monitoring) into buildenv/files/other/vmware/ folder.
+Also download VMware-vSphere-Perl-SDK-6.5.0-4566394.x86\_64.tar.gz from VMWare (for ESX monitoring) into buildenv/files/other/vmware/ folder (ajust version "6.5" version to match your VCenter version but it seems to work nevertheless).
+
+# Building the image
+```bash
+cd /tmp/docker-centreon
+./build.sh
+```
+
+# Running the image
+```bash
+cd /tmp/docker-centreon
+./run.sh
+```
 
 # MySQL/MariaDB on the host
+An external MariaDB container may be needed or you may just use you regular MySQL/MariaDB instance on the host directly.
+
+If so, make sure to edit my.cnf and disable localhost-only bind by adding (or replacing) `bind-address 0.0.0.0`, then restart MySQL server.
+
+If you prefer to docker way:
+```bash
+sudo docker run -itd \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    --name centreon-db \
+    mariadb
+```
 
 There's no point trying to fight with Centreon Web installer.
 The only way to get thru is to temporary create a network-enabled superadmin user and let him do what he wants:
