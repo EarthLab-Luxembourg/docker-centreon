@@ -58,6 +58,20 @@ FLUSH PRIVILEGES;
 For some unknown reason Centreon gets stuck into an infinite wizard loop. Just restart the container.
 Centreon is now available on http://docker.host:8080/centreon/.
 
+If you're upgrading from one version to another, start the container with "upgrade" parameter:
+
+```
+./run.sh upgrade
+```
+
+Once you are done with upgrade wizard, kill container and start it again without upgrade mode:
+
+```
+docker stop centreon
+docker rm centreon
+./run.sh
+```
+
 # mklive-status TCP socket
 
 mklive-status socket will be exported over TCP so you can easily use Nagvis or Truk on the host itself, or another machine/container.
