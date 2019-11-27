@@ -2,4 +2,9 @@
 
 source CONFIG
 
-docker exec -it ${container_name} bash
+docker exec \
+  --interactive --tty \
+  --env TERM=${TERM} \
+  --env COLUMNS=${COLUMNS} \
+  ${container_name} \
+  bash
