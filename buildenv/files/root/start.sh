@@ -34,10 +34,19 @@ find /etc/centreon-engine/          -maxdepth 0 -empty -exec rsync -avz /etc/cen
 chown -R centreon-broker:centreon-broker /etc/centreon-broker/ /var/log/centreon-broker/ /var/lib/centreon-broker/
 chown -R centreon-engine:centreon-engine /etc/centreon-engine/ /var/log/centreon-engine/ /var/lib/centreon-engine/
 chown -R centreon:centreon-broker /var/lib/centreon/metrics/ /var/lib/centreon/status/
+if [ -d /var/lib/centreon/centplugins ]; then
+    chown -R centreon:centreon /var/lib/centreon/centplugins
+fi
 find /var/lib/centreon/metrics/ -type f -exec chmod 0664 {} \;
 find /var/lib/centreon/status/ -type f -exec chmod 0664 {} \;
 find /var/log/centreon-broker/ -type f -exec chmod 0664 {} \;
 find /var/log/centreon-engine/ -type f -exec chmod 0664 {} \;
+
+# Since 18.10 PHP session from PHP-FPM are here
+rm -rf /var/lib/centreon/sessions
+mkdir -p /var/lib/centreon/sessions
+chown root:www-data /var/lib/centreon/sessions
+chmod 0770 /var/lib/centreon/sessions
 
 # Init like system to start services
 supervisord -n -c /etc/supervisor/supervisord.conf -e debug

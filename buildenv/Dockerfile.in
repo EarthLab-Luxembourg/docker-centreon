@@ -1,5 +1,4 @@
-# Need PHP 5.4.x, incompatible with newer versions
-FROM debian:jessie
+FROM debian:buster
 
 MAINTAINER Adam Cecile <acecile@le-vert.net>
 
@@ -8,7 +7,7 @@ ENV HOSTNAME @@HOSTNAME@@
 ENV SMTP_SERVER @@SMTP_SERVER@@
 ENV SMTP_MAIL_ALIAS root@@@HOSTNAME@@
 
-ENV CENTREON_VERSION 2.8.28
+ENV CENTREON_VERSION 18.10.7
 ENV CENTREON_WIDGET_GRAPH_MONITORING_VERSION 1.5.2
 ENV CENTREON_WIDGET_SERVICE_MONITORING_VERSION 1.6.3
 ENV CENTREON_WIDGET_HOST_MONITORING_VERSION 1.6.3
@@ -27,10 +26,8 @@ ENV VMWARE_PERL_SDK @@VMWARE_PERL_SDK@@
 
 
 ### Update Debian system
-RUN echo "deb http://archive.debian.org/debian/ jessie main contrib non-free" > /etc/apt/sources.list \
-    && echo "deb http://archive.debian.org/debian/ jessie-backports main contrib non-free" >> /etc/apt/sources.list \
-    && echo "deb http://security.debian.org/ jessie/updates main contrib non-free" >> /etc/apt/sources.list \
-    && echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/50disable-check-valid-until
+RUN echo "deb http://deb.debian.org/debian/ buster main contrib non-free" > /etc/apt/sources.list \
+    && echo "deb http://security.debian.org/ buster/updates main contrib non-free" >> /etc/apt/sources.list
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade
 
 
@@ -45,11 +42,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     sudo \
     rsync \
     nagios-plugins nagios-plugins-contrib nagios-nrpe-plugin \
-    apache2 libapache2-mod-php5 \
+    apache2 php-fpm \
     snmp snmp-mibs-downloader \
     libmonitoring-plugin-perl \
     xinetd \
-    vim nano
+    vim nano \
+    gnupg
 # Fix check_icmp not being setuid root
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_icmp
 RUN dpkg-statoverride --update --add root root 4755 /usr/lib/nagios/plugins/check_dhcp
@@ -63,17 +61,17 @@ RUN mkfifo /var/spool/nullmailer/trigger \
     && echo "${SMTP_SERVER}" > /etc/nullmailer/remotes \
     && echo "${SMTP_MAIL_ALIAS}" > /etc/nullmailer/adminaddr
 # Set Apache to UTC timezone
-RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/php5/apache2/php.ini
-
+RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/php/7.3/fpm/php.ini
 
 #### Install centreon engine and related
-RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ jessie main' >> /etc/apt/sources.list
+RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ buster main' >> /etc/apt/sources.list
+ADD https://packages.le-vert.net/packages.le-vert.net.gpg.key /tmp/
+RUN apt-key add /tmp/packages.le-vert.net.gpg.key
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl
 # mklive-status for nagvis or thruk installation
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    -t jessie-backports \
     check-mk-livestatus
 # Rename files that will be exported as external volumes and dpkg-divert initscript, replaced by a script calling supervisorctl
 RUN  mv /etc/centreon-broker /etc/centreon-broker.initial \
@@ -92,20 +90,22 @@ RUN chmod 0755 /etc/init.d/centengine /etc/init.d/centcore /etc/init.d/cbd
 
 
 ### Cassandra monitoring require cassandra binaries and JRE
-RUN echo 'deb [trusted=yes] http://www.apache.org/dist/cassandra/debian 34x main' >> /etc/apt/sources.list
+RUN echo 'deb [trusted=yes] http://www.apache.org/dist/cassandra/debian 311x main' >> /etc/apt/sources.list
 ADD https://www.apache.org/dist/cassandra/KEYS /tmp/
 RUN apt-key add /tmp/KEYS
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    -t jessie-backports \
     cassandra openjdk-8-jre-headless
 
 
 ### Install centreon Web
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    php5 php5-mysql php5-ldap php5-gd php5-sqlite php5-intl \
-    php-pear php-auth-sasl php-db php-mdb2 php-date php-net-smtp php-net-socket php-validate php-xml-rpc php-soap php-log \
-    librrds-perl libdbi-perl libdbd-mysql-perl libnet-snmp-perl libconfig-inifiles-perl
+    php php-mysql php-ldap php-gd php-sqlite3 php-intl \
+    php-pear php-auth-sasl php-mdb2 php-date php-net-smtp php-net-socket php-validate php-xmlrpc php-soap \
+    librrds-perl libdbi-perl libdbd-mysql-perl libnet-snmp-perl libconfig-inifiles-perl \
+    php-mbstring
+# Not available in Debian Buster
+# php-db
 WORKDIR /tmp
 # DO NOT USE GITHUB URL HERE
 # IT LOOKS BEING THE SAME BUT IT'S NOT
@@ -123,11 +123,17 @@ RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
           && echo CENTREON_ENGINE_CONNECTORS=/usr/lib/centreon-connector >> tmpl/vardistrib/local \
           && echo CENTREON_PLUGINS=/usr/lib/nagios/plugins >> tmpl/vardistrib/local \
           && echo INSTALL_DIR_CENTREON=/srv/centreon >> tmpl/vardistrib/local \
+          && echo DIR_PHP_FPM_CONF=/etc/php/7.3/fpm/pool.d >> tmpl/vardistrib/local \
           && groupadd centreon && useradd -g centreon centreon \
           && mv /bin/hostname /bin/hostname.orig && /bin/echo -e "/bin/sh\n\necho ${HOSTNAME}" > /bin/hostname && chmod 755 /bin/hostname \
           && ./install.sh -f tmpl/vardistrib/local \
           && mv /bin/hostname.orig /bin/hostname \
-          && a2enconf centreon
+          && a2enconf centreon \
+          && a2enmod proxy_fcgi \
+          && a2enmod rewrite
+# Reinstall check_centreon_dummy that has been dropped
+COPY files/usr/lib/nagios/plugins/check_centreon_dummy /usr/lib/nagios/plugins/
+RUN chmod 0755 /usr/lib/nagios/plugins/check_centreon_dummy
 # Workaround centreon-partitioning.php *script* (there is also a cron with same filename)
 # not being installed by install.sh
 RUN	cp -v bin/centreon-partitioning.php /usr/share/centreon/bin/ \
@@ -137,12 +143,14 @@ RUN     mkdir -p `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/u
           && cp -a /tmp/centreon-web-$CENTREON_VERSION/lib/perl/centreon `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
           && mv /etc/centreon /etc/centreon.initial \
           && mv /var/lib/centreon /var/lib/centreon.initial
-
+# Workarounds for 18.10 upgrade
+RUN	chown www-data /srv/centreon/www/index.html
 
 
 ### Setup supervisor to start all processes
 COPY files/root/start.sh /root/
 COPY files/etc/supervisor/conf.d/apache2.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/php-fpm.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/cron.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/rsyslogd.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/nullmailer.conf /etc/supervisor/conf.d/
@@ -208,7 +216,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     libdevel-stacktrace-perl libclass-data-inheritable-perl libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-x509-perl libexception-class-perl libpath-class-perl libtry-tiny-perl libnet-inet6glue-perl libuuid-random-perl \
     libcrypt-ssleay-perl \
     libarchive-zip-perl libclass-methodmaker-perl libdata-dump-perl libsoap-lite-perl libuuid-perl \
-    libwww-perl libnet-http-perl libsocket6-perl 
+    libwww-perl libnet-http-perl libsocket6-perl \
+    libmodule-build-perl
 COPY files/other/vmware/$VMWARE_PERL_SDK /tmp/
 COPY files/other/vmware/auto_install_vmware_sdk.sh /tmp/
 COPY files/other/vmware/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch /tmp/
@@ -252,8 +261,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
 ### check_json
 COPY files/git-repositories/check_json/check_json.pl /usr/lib/nagios/plugins/
 RUN chmod 755 /usr/lib/nagios/plugins/check_json.pl
+RUN sed -i 's!Nagios::Plugin!Monitoring::Plugin!g' /usr/lib/nagios/plugins/check_json.pl
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    libwww-perl libjson-perl libnagios-plugin-perl
+    libwww-perl libjson-perl libmonitoring-plugin-perl
 
 # Centreon Widgets
 # No working download link for graph-monitoring
