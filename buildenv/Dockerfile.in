@@ -126,7 +126,7 @@ RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
           && echo DIR_PHP_FPM_CONF=/etc/php/7.3/fpm/pool.d >> tmpl/vardistrib/local \
           && groupadd centreon && useradd -g centreon centreon \
           && mv /bin/hostname /bin/hostname.orig && /bin/echo -e "/bin/sh\n\necho ${HOSTNAME}" > /bin/hostname && chmod 755 /bin/hostname \
-          && ./install.sh -f tmpl/vardistrib/local \
+          && /bin/bash ./install.sh -f tmpl/vardistrib/local \
           && mv /bin/hostname.orig /bin/hostname \
           && a2enconf centreon \
           && a2enmod proxy_fcgi \
