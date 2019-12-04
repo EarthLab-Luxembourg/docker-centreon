@@ -145,7 +145,21 @@ RUN     mkdir -p `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/u
           && mv /var/lib/centreon /var/lib/centreon.initial
 # Workarounds for 18.10 upgrade
 RUN	chown www-data /srv/centreon/www/index.html
-
+# Workaround for 19.10 upgrade (install.sh looks completely fucked)
+# http://www.sugarbug.fr/atelier/installations/ubuntu/ubuntu1910_centreon_1910/
+RUN	cp -v .env /srv/centreon/ \
+	  && cp -v .env.local.php /srv/centreon/ \
+	  && cp -v container.php /srv/centreon/ \
+	  && cp -v config/bootstrap.php /srv/centreon/config/ \
+	  && cp -v config/bundles.php /srv/centreon/config/ \
+	  && cp -v config/services.yaml /srv/centreon/config/ \
+	  && cp -av api /srv/centreon/ \
+	  && cp -av config/Modules /srv/centreon/config/ \
+	  && cp -av config/packages /srv/centreon/config/ \
+	  && cp -av config/routes /srv/centreon/config/ \
+	  && chown -R root:centreon /var/cache/centreon/ \
+	  && chown -R root:root /srv/centreon/config/ \
+	  && chmod -R 0775 /var/cache/centreon/
 
 ### Setup supervisor to start all processes
 COPY files/root/start.sh /root/
