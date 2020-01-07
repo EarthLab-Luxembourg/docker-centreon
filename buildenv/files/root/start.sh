@@ -48,5 +48,10 @@ mkdir -p /var/lib/centreon/sessions
 chown root:www-data /var/lib/centreon/sessions
 chmod 0770 /var/lib/centreon/sessions
 
+# Since 19.04, When ACKing a service it Centreon-Web attemps to create a file here
+mkdir -p /var/lib/centreon/centcore
+chown -R root:www-data /var/lib/centreon/centcore
+chmod 0770 /var/lib/centreon/centcore
+
 # Init like system to start services
 supervisord -n -c /etc/supervisor/supervisord.conf -e debug
