@@ -270,6 +270,8 @@ RUN chmod 0755 /root
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     nagios-plugins-harisekhon
+RUN sed -i 's!/state\.json!/state!' /usr/lib/nagios/plugins/check_mesos_master_state.pl
+RUN sed -i 's!/state\.json!/state!' /usr/lib/nagios/plugins/check_mesos_slave_state.pl
 # End BigData monitoring
 
 ### check_json
