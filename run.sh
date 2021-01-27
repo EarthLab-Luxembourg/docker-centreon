@@ -14,6 +14,7 @@ docker run -d \
  -v "${host_volumes_path}/volumes/var/lib/centreon-engine:/var/lib/centreon-engine" \
  -v "${host_volumes_path}/volumes/var/log/centreon-engine:/var/log/centreon-engine" \
  -v "${host_volumes_path}/volumes/var/lib/centreon:/var/lib/centreon" \
+ --cap-add=SYS_PTRACE \
  --hostname "${hostname}" \
  --name "${container_name}" \
  --restart always \
