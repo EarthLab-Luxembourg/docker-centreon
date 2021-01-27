@@ -70,6 +70,8 @@ RUN apt-key add /tmp/packages.le-vert.net.gpg.key
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl
+# Workaround meta services not working
+RUN ln -s /usr/lib/nagios/plugins/centreon_plugins.pl /usr/lib/nagios/plugins/centreon_centreon_central.pl
 # mklive-status for nagvis or thruk installation
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     check-mk-livestatus
