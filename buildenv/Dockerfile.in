@@ -7,7 +7,7 @@ ENV HOSTNAME @@HOSTNAME@@
 ENV SMTP_SERVER @@SMTP_SERVER@@
 ENV SMTP_MAIL_ALIAS root@@@HOSTNAME@@
 
-ENV CENTREON_VERSION 19.10.10
+ENV CENTREON_VERSION 19.10.23
 ENV CENTREON_WIDGET_GRAPH_MONITORING_VERSION 19.10.0
 ENV CENTREON_WIDGET_SERVICE_MONITORING_VERSION 19.10.2
 ENV CENTREON_WIDGET_HOST_MONITORING_VERSION 19.10.1
@@ -131,7 +131,8 @@ RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
           && mv /bin/hostname.orig /bin/hostname \
           && a2enconf centreon \
           && a2enmod proxy_fcgi \
-          && a2enmod rewrite
+          && a2enmod rewrite \
+          && a2enmod headers
 # Reinstall check_centreon_dummy that has been dropped
 COPY files/usr/lib/nagios/plugins/check_centreon_dummy /usr/lib/nagios/plugins/
 RUN chmod 0755 /usr/lib/nagios/plugins/check_centreon_dummy
