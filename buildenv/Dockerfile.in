@@ -83,12 +83,12 @@ RUN  mv /etc/centreon-broker /etc/centreon-broker.initial \
      && mv /var/lib/centreon-broker /var/lib/centreon-broker.initial \
      && mv /var/log/centreon-broker /var/log/centreon-broker.initial \
      && dpkg-divert --add --rename /etc/init.d/centengine \
-     && dpkg-divert --add --rename /etc/init.d/centcore \
+     && dpkg-divert --add --rename /etc/init.d/gorgoned \
      && dpkg-divert --add --rename /etc/init.d/cbd
 COPY files/etc/init.d/centengine /etc/init.d/
-COPY files/etc/init.d/centcore /etc/init.d/
+COPY files/etc/init.d/gorgoned /etc/init.d/
 COPY files/etc/init.d/cbd /etc/init.d/
-RUN chmod 0755 /etc/init.d/centengine /etc/init.d/centcore /etc/init.d/cbd
+RUN chmod 0755 /etc/init.d/centengine /etc/init.d/gorgoned /etc/init.d/cbd
 
 
 ### Cassandra monitoring require cassandra binaries and JRE
@@ -111,6 +111,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     libdbi-perl \
     libyaml-libyaml-perl \
     libhash-merge-perl \
+    libdbd-sqlite3-perl \
     build-essential \
     cpanminus \
     libzmq3-dev \
@@ -198,7 +199,7 @@ COPY files/etc/supervisor/conf.d/rsyslogd.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/nullmailer.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/centengine.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/cbd.conf /etc/supervisor/conf.d/
-COPY files/etc/supervisor/conf.d/centcore.conf /etc/supervisor/conf.d/
+COPY files/etc/supervisor/conf.d/gorgoned.conf /etc/supervisor/conf.d/
 COPY files/etc/supervisor/conf.d/xinetd.conf /etc/supervisor/conf.d/
 COPY files/etc/xinetd.d/mklive /etc/xinetd.d/
 
