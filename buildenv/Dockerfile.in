@@ -102,6 +102,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
 
 ### Install centreon gorgone
 # After build-essential (included) is required to build ZMQ::LibZMQ4 which is not available as Debian package
+# Dep libdbd-sqlite3-perl is not shown but happens when you start gorgoned with a valid config file
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     perl-modules \
     libjson-xs-perl \
