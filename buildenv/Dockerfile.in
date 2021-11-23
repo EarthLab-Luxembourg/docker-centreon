@@ -170,6 +170,7 @@ RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
           && groupadd centreon && useradd -g centreon centreon \
           && mv /bin/hostname /bin/hostname.orig && /bin/echo -e "/bin/sh\n\necho ${HOSTNAME}" > /bin/hostname && chmod 755 /bin/hostname \
           && /bin/bash ./install.sh -f tmpl/vardistrib/local \
+          && mkdir -p /etc/centreon/config.d && chown www-data:centreon /etc/centreon/config.d && chmod 0755 /etc/centreon/config.d \
           && mv /bin/hostname.orig /bin/hostname \
           && a2enconf centreon \
           && a2enmod proxy_fcgi \
