@@ -8,6 +8,7 @@ ENV SMTP_SERVER @@SMTP_SERVER@@
 ENV SMTP_MAIL_ALIAS root@@@HOSTNAME@@
 
 ENV CENTREON_VERSION 20.04.19
+ENV CENTREON_GORGONE_VERSION 20.04.11
 ENV CENTREON_WIDGET_GRAPH_MONITORING_VERSION 20.04.1
 ENV CENTREON_WIDGET_SERVICE_MONITORING_VERSION 20.04.4
 ENV CENTREON_WIDGET_HOST_MONITORING_VERSION 20.04.5
@@ -98,6 +99,41 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     cassandra openjdk-8-jre-headless
 
+
+### Install centreon gorgone
+# After build-essential (included) is required to build ZMQ::LibZMQ4 which is not available as Debian package
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+    perl-modules \
+    libjson-xs-perl \
+    libcryptx-perl \
+    libcrypt-cbc-perl \
+    libyaml-perl \
+    libdbi-perl \
+    libyaml-libyaml-perl \
+    libhash-merge-perl \
+    build-essential \
+    cpanminus \
+    libzmq3-dev \
+    libtest-tcp-perl \
+    libtest-fatal-perl \
+    libtest-requires-perl \
+    libtry-tiny-perl \
+    libdevel-checklib-perl \
+    libtask-weaken-perl
+WORKDIR /tmp
+ADD	https://github.com/centreon/centreon-gorgone/archive/refs/tags/$CENTREON_GORGONE_VERSION.tar.gz /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION.tar.gz
+RUN     mkdir centreon-gorgone-$CENTREON_GORGONE_VERSION && tar xzf centreon-gorgone-$CENTREON_GORGONE_VERSION.tar.gz -C centreon-gorgone-$CENTREON_GORGONE_VERSION --strip-components=1
+WORKDIR /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION
+RUN     echo 'GORGONE_LOG="/var/log/centreon-gorgone"' > /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_VARLIB="/var/lib/centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_VARLIB="/var/lib/centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_ETC="/etc/centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_BINDIR="/usr/bin/"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_PERL=`eval "\`perl -V:installvendorlib\`"; echo $installvendorlib`' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'SYSCONFIG="/etc/default"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_USER="centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && echo 'GORGONE_GROUP="centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
+          && /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/install.sh  -f /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response
 
 ### Install centreon Web
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
