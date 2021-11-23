@@ -7,6 +7,7 @@ ENV HOSTNAME @@HOSTNAME@@
 ENV SMTP_SERVER @@SMTP_SERVER@@
 ENV SMTP_MAIL_ALIAS root@@@HOSTNAME@@
 
+ENV CENTREON_MAJOR 19.10
 ENV CENTREON_VERSION 19.10.23
 ENV CENTREON_WIDGET_GRAPH_MONITORING_VERSION 19.10.0
 ENV CENTREON_WIDGET_SERVICE_MONITORING_VERSION 19.10.2
@@ -69,6 +70,10 @@ RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/p
 ADD https://packages.le-vert.net/packages.le-vert.net.gpg.key /tmp/
 RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ buster main' >> /etc/apt/sources.list \
       && apt-key add /tmp/packages.le-vert.net.gpg.key \
+      && echo 'Package: centreon-broker centreon-engine centreon-connector centreon-plugins libcentreon-clib' > /etc/apt/preferences.d/centreon.pref \
+      && echo "Pin: version $CENTREON_MAJOR.*" >> /etc/apt/preferences.d/centreon.pref \
+      && echo 'Pin-Priority: 1000' >> /etc/apt/preferences.d/centreon.pref \
+      && cat /etc/apt/preferences.d/centreon.pref \
       && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade \
       && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
          centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl \
