@@ -161,6 +161,10 @@ RUN     cat tmpl/vardistrib/debian-8 >> tmpl/vardistrib/local \
           && echo CENTREON_PLUGINS=/usr/lib/nagios/plugins >> tmpl/vardistrib/local \
           && echo INSTALL_DIR_CENTREON=/srv/centreon >> tmpl/vardistrib/local \
           && echo DIR_PHP_FPM_CONF=/etc/php/7.3/fpm/pool.d >> tmpl/vardistrib/local \
+          && echo GORGONE_VARLIB=/var/lib/centreon-gorgone >> tmpl/vardistrib/local \
+          && echo GORGONE_CONFIG=/etc/centreon-gorgone >> tmpl/vardistrib/local \
+          && echo GORGONE_USER=centreon-gorgone >> tmpl/vardistrib/local \
+          && echo GORGONE_GROUP=centreon-gorgone >> tmpl/vardistrib/local \
           && sed -i 's!yes_no_default "$(gettext "Is the Gorgone module already installed?")"!true!' ./install.sh \
           && groupadd centreon && useradd -g centreon centreon \
           && mv /bin/hostname /bin/hostname.orig && /bin/echo -e "/bin/sh\n\necho ${HOSTNAME}" > /bin/hostname && chmod 755 /bin/hostname \
