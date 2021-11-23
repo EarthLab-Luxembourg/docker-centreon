@@ -19,7 +19,6 @@ ENV CENTREON_WIDGET_ENGINE_STATUS_VERSION 19.10.0
 ENV CENTREON_WIDGET_GRID_MAP_VERSION 19.10.0
 ENV CENTREON_WIDGET_HTTPLOADER_VERSION 19.10.0
 ENV CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION 19.10.1
-ENV CENTREON_WIDGET_LOGS 18.10.0
 ENV CENTREON_WIDGET_GLOBAL_HEALTH 19.10.0
 
 ENV VMWARE_PERL_SDK @@VMWARE_PERL_SDK@@
@@ -297,7 +296,6 @@ ADD https://github.com/centreon/centreon-widget-grid-map/archive/$CENTREON_WIDGE
 ADD https://github.com/centreon/centreon-widget-httploader/archive/$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz
 ADD https://github.com/centreon/centreon-widget-tactical-overview/archive/$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz
 ADD https://github.com/centreon/centreon-widget-global-health/archive/$CENTREON_WIDGET_GLOBAL_HEALTH.tar.gz /tmp/centreon-widget-global-health-$CENTREON_WIDGET_GLOBAL_HEALTH.tar.gz
-ADD https://github.com/centreon/centreon-widget-logs/archive/$CENTREON_WIDGET_LOGS.tar.gz /tmp/centreon-widget-logs-$CENTREON_WIDGET_LOGS.tar.gz
 RUN tar xvf /tmp/centreon-widget-graph-monitoring-$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-graph-monitoring-$CENTREON_WIDGET_GRAPH_MONITORING_VERSION.tar.gz
 RUN tar xvf /tmp/centreon-widget-service-monitoring-$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-service-monitoring-$CENTREON_WIDGET_SERVICE_MONITORING_VERSION.tar.gz
 RUN tar xvf /tmp/centreon-widget-host-monitoring-$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-host-monitoring-$CENTREON_WIDGET_HOST_MONITORING_VERSION.tar.gz
@@ -310,7 +308,6 @@ RUN tar xvf /tmp/centreon-widget-grid-map-$CENTREON_WIDGET_GRID_MAP_VERSION.tar.
 RUN tar xvf /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-httploader-$CENTREON_WIDGET_HTTPLOADER_VERSION.tar.gz
 RUN tar xvf /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-tactical-overview-$CENTREON_WIDGET_TACTICAL_OVERVIEW_VERSION.tar.gz
 RUN tar xvf /tmp/centreon-widget-global-health-$CENTREON_WIDGET_GLOBAL_HEALTH.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-global-health-$CENTREON_WIDGET_GLOBAL_HEALTH.tar.gz
-RUN tar xvf /tmp/centreon-widget-logs-$CENTREON_WIDGET_LOGS.tar.gz --strip-components=1 -C /srv/centreon/www/widgets/ && rm /tmp/centreon-widget-logs-$CENTREON_WIDGET_LOGS.tar.gz
 
 EXPOSE 80 6557
 
