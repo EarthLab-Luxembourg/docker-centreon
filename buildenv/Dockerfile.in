@@ -119,7 +119,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     libtest-requires-perl \
     libtry-tiny-perl \
     libdevel-checklib-perl \
-    libtask-weaken-perl
+    libtask-weaken-perl \
+    && cpanm --notest ZMQ::LibZMQ4
 WORKDIR /tmp
 ADD	https://github.com/centreon/centreon-gorgone/archive/refs/tags/$CENTREON_GORGONE_VERSION.tar.gz /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION.tar.gz
 RUN     mkdir centreon-gorgone-$CENTREON_GORGONE_VERSION && tar xzf centreon-gorgone-$CENTREON_GORGONE_VERSION.tar.gz -C centreon-gorgone-$CENTREON_GORGONE_VERSION --strip-components=1
