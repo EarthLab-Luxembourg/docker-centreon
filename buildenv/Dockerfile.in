@@ -183,8 +183,8 @@ RUN chmod 0755 /usr/lib/nagios/plugins/check_centreon_dummy
 # not being installed by install.sh
 RUN	cp -v bin/centreon-partitioning.php /usr/share/centreon/bin/ \
           && chmod 0755 /usr/share/centreon/bin/centreon-partitioning.php \
-          && sed -i "s|realpath(dirname(__FILE__) . '/../config/centreon.config.php')|'/srv/centreon/config/centreon.config.php'|" /usr/share/centreon/bin/centreon-partitioning.php
-RUN     mkdir -p `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
+          && sed -i "s|realpath(dirname(__FILE__) . '/../config/centreon.config.php')|'/srv/centreon/config/centreon.config.php'|" /usr/share/centreon/bin/centreon-partitioning.php \
+          && mkdir -p `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
           && cp -a /tmp/centreon-web-$CENTREON_VERSION/lib/perl/centreon `perl -e 'for (@INC) { print $_."\n" and exit() if ($_ =~ /^\/usr\/local\/share\/perl/) }'` \
           && mv /etc/centreon /etc/centreon.initial \
           && mv /var/lib/centreon /var/lib/centreon.initial
@@ -228,10 +228,10 @@ RUN chmod 755 /usr/lib/nagios/plugins/check_equallogic.sh
 ### IPMI monitoring
 COPY files/git-repositories/check_ipmi_simple/check_ipmi_simple_chassis.py /usr/lib/nagios/plugins/
 COPY files/git-repositories/check_ipmi_simple/check_ipmi_simple_sensors.py /usr/lib/nagios/plugins/
-RUN chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_chassis.py
-RUN chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_sensors.py
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    freeipmi-tools
+RUN chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_chassis.py \
+      && chmod 755 /usr/lib/nagios/plugins/check_ipmi_simple_sensors.py \
+      && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+         freeipmi-tools
 
 ### RabbitMQ monitoring
 COPY files/git-repositories/nagios-plugins-rabbitmq/scripts/check_rabbitmq_aliveness /usr/lib/nagios/plugins/
@@ -263,40 +263,41 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     dnsutils
 
 ### Add VMware/ESX monitoring
-RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    libssl-dev \
-    perl-doc \
-    libxml-libxml-perl \
-    libxml2-dev \
-    uuid-dev \
-    kmod \
-    expect \
-    libdevel-stacktrace-perl libclass-data-inheritable-perl libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-x509-perl libexception-class-perl libpath-class-perl libtry-tiny-perl libnet-inet6glue-perl libuuid-random-perl \
-    libcrypt-ssleay-perl \
-    libarchive-zip-perl libclass-methodmaker-perl libdata-dump-perl libsoap-lite-perl libuuid-perl \
-    libwww-perl libnet-http-perl libsocket6-perl \
-    libmodule-build-perl
+RUN apt-get update \
+      && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+        libssl-dev \
+        perl-doc \
+        libxml-libxml-perl \
+        libxml2-dev \
+        uuid-dev \
+        kmod \
+        expect \
+        libdevel-stacktrace-perl libclass-data-inheritable-perl libconvert-asn1-perl libcrypt-openssl-rsa-perl libcrypt-x509-perl libexception-class-perl libpath-class-perl libtry-tiny-perl libnet-inet6glue-perl libuuid-random-perl \
+        libcrypt-ssleay-perl \
+        libarchive-zip-perl libclass-methodmaker-perl libdata-dump-perl libsoap-lite-perl libuuid-perl \
+        libwww-perl libnet-http-perl libsocket6-perl \
+        libmodule-build-perl
 COPY files/other/vmware/$VMWARE_PERL_SDK /tmp/
 COPY files/other/vmware/auto_install_vmware_sdk.sh /tmp/
 COPY files/other/vmware/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch /tmp/
 # Install it
 WORKDIR /tmp
-RUN tar xvzf "$VMWARE_PERL_SDK"
 # Workaround old SDK not working properly on recent PERL.... (dead slow)
-RUN if `echo "$VMWARE_PERL_SDK" | grep -qE '(SDK-6.0|SDK-5.5)'`; then \
-      apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install make wget \
-        && wget https://github.com/libwww-perl/libwww-perl/archive/libwww-perl/5.837.tar.gz \
-        && tar xzf 5.837.tar.gz \
-        && cd libwww-perl-libwww-perl-5.837/ \
-        && perl Makefile.PL INSTALL_BASE=/opt/libwww-perl-5.837 \
-        && make \
-        && make install \
-        && sed -i '1 i\use lib "/opt/libwww-perl-5.837/lib/perl5";' /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm \
-        && patch /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm < /tmp/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch; \
-    fi
 # Sleep to avoid text file busy bug when running ./auto_install_vmware_sdk.sh
-RUN echo ubuntu > /etc/tmp-release \
+RUN tar xvzf "$VMWARE_PERL_SDK" \
+      && if `echo "$VMWARE_PERL_SDK" | grep -qE '(SDK-6.0|SDK-5.5)'`; then \
+        apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install make wget \
+          && wget https://github.com/libwww-perl/libwww-perl/archive/libwww-perl/5.837.tar.gz \
+          && tar xzf 5.837.tar.gz \
+          && cd libwww-perl-libwww-perl-5.837/ \
+          && perl Makefile.PL INSTALL_BASE=/opt/libwww-perl-5.837 \
+          && make \
+          && make install \
+          && sed -i '1 i\use lib "/opt/libwww-perl-5.837/lib/perl5";' /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm \
+          && patch /tmp/vmware-vsphere-cli-distrib/lib/VMware/share/VMware/VICommon.pm < /tmp/vmware_sdk_Possible_precedence_issue_with_control_flow_operator.patch; \
+      fi \
+    && cd /tmp \
+    && echo ubuntu > /etc/tmp-release \
     && chmod 0755 auto_install_vmware_sdk.sh \
     && sleep 1 \
     && ./auto_install_vmware_sdk.sh
