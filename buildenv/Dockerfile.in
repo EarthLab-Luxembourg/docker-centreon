@@ -63,27 +63,27 @@ RUN mkfifo /var/spool/nullmailer/trigger \
 RUN sed -i 's!^;\?\(date\.timezone[[:space:]]*=[[:space:]]*\).*$!\1 UTC!' /etc/php/7.3/fpm/php.ini
 
 #### Install centreon engine and related
-RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ buster main' >> /etc/apt/sources.list
-ADD https://packages.le-vert.net/packages.le-vert.net.gpg.key /tmp/
-RUN apt-key add /tmp/packages.le-vert.net.gpg.key
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl
-# Workaround meta services not working
-RUN ln -s /usr/lib/nagios/plugins/centreon_plugins.pl /usr/lib/nagios/plugins/centreon_centreon_central.pl
+# ln -s /usr/lib/nagios/plugins/centreon_plugins.pl: Workaround meta services not working
 # mklive-status for nagvis or thruk installation
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
-    check-mk-livestatus
 # Rename files that will be exported as external volumes and dpkg-divert initscript, replaced by a script calling supervisorctl
-RUN  mv /etc/centreon-broker /etc/centreon-broker.initial \
-     && mv /etc/centreon-engine /etc/centreon-engine.initial \
-     && mv /var/lib/centreon-engine /var/lib/centreon-engine.initial \
-     && mv /var/log/centreon-engine /var/log/centreon-engine.initial \
-     && mv /var/lib/centreon-broker /var/lib/centreon-broker.initial \
-     && mv /var/log/centreon-broker /var/log/centreon-broker.initial \
-     && dpkg-divert --add --rename /etc/init.d/centengine \
-     && dpkg-divert --add --rename /etc/init.d/centcore \
-     && dpkg-divert --add --rename /etc/init.d/cbd
+ADD https://packages.le-vert.net/packages.le-vert.net.gpg.key /tmp/
+RUN echo 'deb [trusted=yes] http://packages.le-vert.net/monitoring/debian/ buster main' >> /etc/apt/sources.list \
+      && apt-key add /tmp/packages.le-vert.net.gpg.key \
+      && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' dist-upgrade \
+      && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+         centreon-broker centreon-engine centreon-connector centreon-plugins libdate-manip-perl \
+      && ln -s /usr/lib/nagios/plugins/centreon_plugins.pl /usr/lib/nagios/plugins/centreon_centreon_central.pl \
+      && DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
+         check-mk-livestatus \
+      && mv /etc/centreon-broker /etc/centreon-broker.initial \
+      && mv /etc/centreon-engine /etc/centreon-engine.initial \
+      && mv /var/lib/centreon-engine /var/lib/centreon-engine.initial \
+      && mv /var/log/centreon-engine /var/log/centreon-engine.initial \
+      && mv /var/lib/centreon-broker /var/lib/centreon-broker.initial \
+      && mv /var/log/centreon-broker /var/log/centreon-broker.initial \
+      && dpkg-divert --add --rename /etc/init.d/centengine \
+      && dpkg-divert --add --rename /etc/init.d/centcore \
+      && dpkg-divert --add --rename /etc/init.d/cbd
 COPY files/etc/init.d/centengine /etc/init.d/
 COPY files/etc/init.d/centcore /etc/init.d/
 COPY files/etc/init.d/cbd /etc/init.d/
