@@ -53,5 +53,10 @@ mkdir -p /var/lib/centreon/centcore
 chown -R root:www-data /var/lib/centreon/centcore
 chmod 0770 /var/lib/centreon/centcore
 
+# This folder has been added with 20.04 and upgrade from previous version create DB access YAML config in it
+mkdir -p /etc/centreon/config.d
+chown -R www-data:centreon /etc/centreon/config.d
+chmod 0755 /etc/centreon/config.d
+
 # Init like system to start services
 supervisord -n -c /etc/supervisor/supervisord.conf -e debug
