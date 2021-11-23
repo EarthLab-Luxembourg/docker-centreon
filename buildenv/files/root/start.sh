@@ -23,10 +23,13 @@ find /var/log/centreon-engine/      -maxdepth 0 -empty -exec rsync -avz /var/log
 find /var/lib/centreon-engine/      -maxdepth 0 -empty -exec rsync -avz /var/lib/centreon-engine.initial/ /var/lib/centreon-engine/ \;
 find /var/log/centreon-broker/      -maxdepth 0 -empty -exec rsync -avz /var/log/centreon-broker.initial/ /var/log/centreon-broker/ \;
 find /var/lib/centreon-broker/      -maxdepth 0 -empty -exec rsync -avz /var/lib/centreon-broker.initial/ /var/lib/centreon-broker/ \;
+find /var/log/centreon-gorgone/     -maxdepth 0 -empty -exec rsync -avz /var/log/centreon-gorgone.initial/ /var/log/centreon-gorgone/ \;
+find /var/lib/centreon-gorgone/     -maxdepth 0 -empty -exec rsync -avz /var/lib/centreon-gorgone.initial/ /var/lib/centreon-gorgone/ \;
 find /var/lib/centreon/             -maxdepth 0 -empty -exec rsync -avz /var/lib/centreon.initial/        /var/lib/centreon/        \;
 find /var/cache/nagvis/userfiles/   -maxdepth 0 -empty -exec rsync -avz /var/cache/nagvis/userfiles.initial/      /var/cache/nagvis/userfiles/ \;
 find /etc/centreon-broker/          -maxdepth 0 -empty -exec rsync -avz /etc/centreon-broker.initial/ /etc/centreon-broker/ \;
 find /etc/centreon-engine/          -maxdepth 0 -empty -exec rsync -avz /etc/centreon-engine.initial/ /etc/centreon-engine/ \;
+find /etc/centreon-gorgone/         -maxdepth 0 -empty -exec rsync -avz /etc/centreon-gorgone.initial/ /etc/centreon-gorgone/ \;
 
 # Bad permissions can occurs as the volume is on the host
 # systemd uid of centreon-broker and centreon-engine
@@ -34,6 +37,7 @@ find /etc/centreon-engine/          -maxdepth 0 -empty -exec rsync -avz /etc/cen
 chown -R centreon-broker:centreon-broker /etc/centreon-broker/ /var/log/centreon-broker/ /var/lib/centreon-broker/
 chown -R centreon-engine:centreon-engine /etc/centreon-engine/ /var/log/centreon-engine/ /var/lib/centreon-engine/
 chown -R centreon:centreon-broker /var/lib/centreon/metrics/ /var/lib/centreon/status/
+chown -R centreon-gorgone:centreon-gorgone /etc/centreon-gorgone/ /var/log/centreon-gorgone/ /var/lib/centreon-gorgone/
 if [ -d /var/lib/centreon/centplugins ]; then
     chown -R centreon:centreon /var/lib/centreon/centplugins
 fi

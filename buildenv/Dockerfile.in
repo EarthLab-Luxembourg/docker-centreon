@@ -83,12 +83,10 @@ RUN  mv /etc/centreon-broker /etc/centreon-broker.initial \
      && mv /var/lib/centreon-broker /var/lib/centreon-broker.initial \
      && mv /var/log/centreon-broker /var/log/centreon-broker.initial \
      && dpkg-divert --add --rename /etc/init.d/centengine \
-     && dpkg-divert --add --rename /etc/init.d/gorgoned \
      && dpkg-divert --add --rename /etc/init.d/cbd
 COPY files/etc/init.d/centengine /etc/init.d/
-COPY files/etc/init.d/gorgoned /etc/init.d/
 COPY files/etc/init.d/cbd /etc/init.d/
-RUN chmod 0755 /etc/init.d/centengine /etc/init.d/gorgoned /etc/init.d/cbd
+RUN chmod 0755 /etc/init.d/centengine /etc/init.d/cbd
 
 
 ### Cassandra monitoring require cassandra binaries and JRE
@@ -137,6 +135,11 @@ RUN     echo 'GORGONE_LOG="/var/log/centreon-gorgone"' > /tmp/centreon-gorgone-$
           && echo 'GORGONE_USER="centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
           && echo 'GORGONE_GROUP="centreon-gorgone"' >> /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response \
           && /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/install.sh  -f /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION/unattended-response
+COPY files/etc/init.d/gorgoned /etc/init.d/
+RUN  mv /etc/centreon-gorgone /etc/centreon-gorgone.initial \
+     && mv /var/lib/centreon-gorgone /var/lib/centreon-gorgone.initial \
+     && mv /var/log/centreon-gorgone /var/log/centreon-gorgone.initial \
+     && chmod 0755 /etc/init.d/gorgoned
 
 ### Install centreon Web
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
