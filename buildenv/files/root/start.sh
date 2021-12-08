@@ -16,13 +16,13 @@ fi
 
 # Workaround gorgone migration missing a file
 # https://github.com/centreon/centreon-gorgone/issues/168
-if [ -d /etc/centreon-gorgone ]; then
+if [ ! -d /etc/centreon-gorgone ]; then
     mkdir /etc/centreon-gorgone
 fi
-if [ -d /etc/centreon-gorgone/config.d ]; then
+if [ ! -d /etc/centreon-gorgone/config.d ]; then
     mkdir /etc/centreon-gorgone/config.d
 fi
-if [ -f /etc/centreon-gorgone/config.d/30-centreon.yaml ]; then
+if [ ! -f /etc/centreon-gorgone/config.d/30-centreon.yaml ]; then
     echo 'name: centreon.yaml' > /etc/centreon-gorgone/config.d/30-centreon.yaml
     echo 'description: Configure Centreon Gorgone to work with Centreon Web.' >> /etc/centreon-gorgone/config.d/30-centreon.yaml
     echo 'centreon: !include /etc/centreon/config.d/*.yaml' >> /etc/centreon-gorgone/config.d/30-centreon.yaml
