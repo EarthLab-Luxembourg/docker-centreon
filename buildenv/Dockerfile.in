@@ -107,6 +107,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
 ### Install centreon gorgone
 # After build-essential (included) is required to build ZMQ::LibZMQ4 which is not available as Debian package
 # Dep libdbd-sqlite3-perl is not shown but happens when you start gorgoned with a valid config file
+# Dep libschedule-cron-perl and libdigest-md5-file-perl are hidden dependencies of gorgoned
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
     perl-modules \
     libjson-xs-perl \
@@ -126,6 +127,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confde
     libtry-tiny-perl \
     libdevel-checklib-perl \
     libtask-weaken-perl \
+    libschedule-cron-perl \
+    libdigest-md5-file-perl \
     && cpanm --notest ZMQ::LibZMQ4
 WORKDIR /tmp
 ADD	https://github.com/centreon/centreon-gorgone/archive/refs/tags/$CENTREON_GORGONE_VERSION.tar.gz /tmp/centreon-gorgone-$CENTREON_GORGONE_VERSION.tar.gz
