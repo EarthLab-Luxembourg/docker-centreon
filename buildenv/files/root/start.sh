@@ -14,6 +14,20 @@ if [ -f "/etc/centreon/conf.pm" -a "${1}" != "upgrade" ]; then
   rm -rf /srv/centreon/www/install/
 fi
 
+# Workaround gorgone migration missing a file
+# https://github.com/centreon/centreon-gorgone/issues/168
+if [ -d /etc/centreon-gorgone ]; then
+    mkdir /etc/centreon-gorgone
+fi
+if [ -d /etc/centreon-gorgone/config.d ]; then
+    mkdir /etc/centreon-gorgone/config.d
+fi
+if [ -f /etc/centreon-gorgone/config.d/30-centreon.yaml ]; then
+    echo 'name: centreon.yaml' > /etc/centreon-gorgone/config.d/30-centreon.yaml
+    echo 'description: Configure Centreon Gorgone to work with Centreon Web.' >> /etc/centreon-gorgone/config.d/30-centreon.yaml
+    echo 'centreon: !include /etc/centreon/config.d/*.yaml' >> /etc/centreon-gorgone/config.d/30-centreon.yaml
+fi
+
 # Fix perms (do it all the time because centreon uid may change)
 chown -R www-data:centreon /etc/centreon
 chmod 750 /etc/centreon
