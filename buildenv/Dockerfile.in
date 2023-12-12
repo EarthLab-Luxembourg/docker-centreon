@@ -96,8 +96,8 @@ RUN chmod 0755 /etc/init.d/centengine /etc/init.d/cbd
 
 
 ### Cassandra monitoring require cassandra binaries and JRE
-RUN echo 'deb [trusted=yes] http://www.apache.org/dist/cassandra/debian 311x main' >> /etc/apt/sources.list
-ADD https://www.apache.org/dist/cassandra/KEYS /tmp/
+RUN echo 'deb [trusted=yes] https://debian.cassandra.apache.org 311x main' >> /etc/apt/sources.list
+ADD https://downloads.apache.org/cassandra/KEYS /tmp/
 RUN apt-key add /tmp/KEYS
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y -o 'Dpkg::Options::=--force-confdef' -o 'Dpkg::Options::=--force-confold' --no-install-recommends --no-install-suggests install \
